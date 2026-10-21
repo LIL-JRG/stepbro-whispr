@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/kevin9038440334/stepbro-whispr/releases/latest"><img src="https://img.shields.io/github/v/release/kevin9038440334/stepbro-whispr?label=versi%C3%B3n&color=1f1f22" alt="Última versión"></a>
+  <a href="https://github.com/stepbro-lab/stepbro-whispr/releases/latest"><img src="https://img.shields.io/github/v/release/stepbro-lab/stepbro-whispr?label=versi%C3%B3n&color=1f1f22" alt="Última versión"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-1f1f22?logo=apple" alt="macOS 27 o posterior">
   <img src="https://img.shields.io/badge/Swift-6.4-1f1f22?logo=swift" alt="Swift 6.4">
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/licencia-PolyForm%20Noncommercial-1f1f22" alt="Licencia: PolyForm Noncommercial 1.0.0"></a>
@@ -51,7 +51,7 @@ Puede funcionar entera en tu Mac, con el reconocimiento de voz de Apple y Apple 
 
 ## Instalación
 
-1. Descarga el último `.dmg` desde [Releases](https://github.com/kevin9038440334/stepbro-whispr/releases/latest).
+1. Descarga el último `.dmg` desde [Releases](https://github.com/stepbro-lab/stepbro-whispr/releases/latest).
 2. Ábrelo y arrastra **stepbro whispr** a **Aplicaciones**.
 3. Abre la app. La primera vez te guía por los permisos de micrófono y Accesibilidad, la tecla para dictar y el idioma.
 
@@ -84,7 +84,7 @@ Con Groq, casi todos los dictados pasan por el modelo de lenguaje, que es quien 
 Necesitas Xcode 27 (Swift 6.4).
 
 ```sh
-git clone https://github.com/kevin9038440334/stepbro-whispr.git
+git clone https://github.com/stepbro-lab/stepbro-whispr.git
 cd stepbro-whispr
 ./scripts/create-certificate.sh   # una vez: certificado local para firmar
 make run                          # compila y abre build/stepbro whispr.app

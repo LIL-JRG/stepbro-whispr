@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/kevin9038440334/stepbro-whispr/releases/latest"><img src="https://img.shields.io/github/v/release/kevin9038440334/stepbro-whispr?label=release&color=1f1f22" alt="Latest release"></a>
+  <a href="https://github.com/stepbro-lab/stepbro-whispr/releases/latest"><img src="https://img.shields.io/github/v/release/stepbro-lab/stepbro-whispr?label=release&color=1f1f22" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-1f1f22?logo=apple" alt="macOS 27 or later">
   <img src="https://img.shields.io/badge/Swift-6.4-1f1f22?logo=swift" alt="Swift 6.4">
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-1f1f22" alt="License: PolyForm Noncommercial 1.0.0"></a>
@@ -53,7 +53,7 @@ The interface is in Spanish. Dictation works in any language supported by Apple'
 
 ## Installation
 
-1. Download the latest `.dmg` from [Releases](https://github.com/kevin9038440334/stepbro-whispr/releases/latest).
+1. Download the latest `.dmg` from [Releases](https://github.com/stepbro-lab/stepbro-whispr/releases/latest).
 2. Open it and drag **stepbro whispr** into **Applications**.
 3. Open the app. The first launch walks you through the microphone and Accessibility permissions, the hotkey and the language.
 
@@ -86,7 +86,7 @@ With Groq, almost every dictation goes through the language model, which is what
 You need Xcode 27 (Swift 6.4).
 
 ```sh
-git clone https://github.com/kevin9038440334/stepbro-whispr.git
+git clone https://github.com/stepbro-lab/stepbro-whispr.git
 cd stepbro-whispr
 ./scripts/create-certificate.sh   # once: a local signing certificate
 make run                          # build and open build/stepbro whispr.app
