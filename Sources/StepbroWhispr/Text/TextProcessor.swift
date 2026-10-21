@@ -24,6 +24,8 @@ struct DictationContext: Sendable {
     var textBefore: String?
     /// El dictado anterior en la misma app, si es reciente.
     var previousDictation: String?
+    /// Nombres propios usados en los últimos dictados, aprendidos del historial.
+    var recentNames: [String] = []
 
     static let none = DictationContext()
 }
@@ -78,9 +80,11 @@ final class TextProcessor {
     }
 
     /// `alternative`: la otra transcripción del mismo audio, para que la IA elija lo mejor de cada una.
+    /// `source`: de dónde viene `raw` («whisper» o «apple»), para que el modelo sepa qué esperar de ella.
     func process(
         _ raw: String,
         alternative: String? = nil,
+        source: String = "whisper",
         locale: Locale,
         languages: [String]? = nil,
         target: DictationTarget,
@@ -92,15 +96,22 @@ final class TextProcessor {
         if let snippet = Snippets.wholeMatch(for: Vocabulary.apply(job.entries, to: raw), in: job.snippets) {
             return snippet.expansion
         }
-        let refined = await refine(raw, alternative: alternative, job: job, textBefore: job.context.textBefore, onPolishing: onPolishing)
+        let refined = await refine(
+            raw, alternative: alternative, source: source, job: job, textBefore: job.context.textBefore, onPolishing: onPolishing
+        )
         return await finish(refined.text, translated: refined.translated, job: job, onPolishing: onPolishing)
     }
+
+    /// Con Groq, casi todo pasa por el modelo: responde en medio segundo y es quien pone los signos
+    /// de interrogación, corrige lo mal oído y quita muletillas. Solo lo muy corto («vale», «sí») va directo.
+    static let groqMinimumWords = 3
 
     /// Primera mitad: limpia una transcripción (entera o un bloque de un dictado largo), con IA si hace falta.
     /// `textBefore`: lo que va justo delante de este texto (el campo, o los bloques anteriores).
     func refine(
         _ raw: String,
         alternative: String? = nil,
+        source: String = "whisper",
         job: Job,
         textBefore: String?,
         onPolishing: () -> Void
@@ -128,7 +139,9 @@ final class TextProcessor {
         // Si manda la versión de Apple por una mezcla de idiomas, la IA corrige sus palabras sueltas.
         // También si hay una palabra que se confunde con otra («Claude» y «cloud») y contexto para decidir.
         let ambiguous = text.wordCount >= 3 && Vocabulary.hasAmbiguousWord(text, in: job.entries)
-        if canPolish, groqTranslates || choice.swapped || ambiguous || SmartFormatter.needsLanguageModel(text, alternative: other) {
+        let minimumWords = groq.polishes ? Self.groqMinimumWords : 10
+        if canPolish, groqTranslates || choice.swapped || ambiguous
+            || SmartFormatter.needsLanguageModel(text, alternative: other, minimumWords: minimumWords) {
             var input = PolishInput(
                 transcript: text,
                 alternative: other,
@@ -142,6 +155,12 @@ final class TextProcessor {
             )
             input.textBefore = textBefore
             input.previousDictation = job.context.previousDictation
+            input.recentNames = job.context.recentNames
+            // Si manda lo que oyó Apple (por una mezcla de idiomas o porque Whisper no llegó), se etiqueta así.
+            if choice.swapped || source == "apple" {
+                input.transcriptSource = "apple"
+                input.alternativeSource = "whisper"
+            }
             if groq.polishes {
                 // Con Groq no se recurre al modelo de Apple si falla: tarda segundos,
                 // y la transcripción de Whisper ya viene puntuada.

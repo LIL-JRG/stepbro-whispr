@@ -247,8 +247,11 @@ public struct GroqClient: Sendable {
 
     // MARK: - Pulido
 
-    public func complete(model: GroqChatModel, system: String, user: String, maxTokens: Int = 4096) async throws -> GroqChatReply {
-        let request = try makeChatRequest(model: model, system: system, user: user, maxTokens: maxTokens)
+    /// `reasoningEffort`: cuánto razona el modelo antes de contestar; nil para lo habitual de cada modelo.
+    public func complete(
+        model: GroqChatModel, system: String, user: String, maxTokens: Int = 4096, reasoningEffort: String? = nil
+    ) async throws -> GroqChatReply {
+        let request = try makeChatRequest(model: model, system: system, user: user, maxTokens: maxTokens, reasoningEffort: reasoningEffort)
         let (data, status, headers) = try await send(request)
         let text = try Self.parseChat(data: data, status: status, headers: headers)
         return GroqChatReply(text: text, limit: GroqRateLimit(headers: headers))
@@ -259,7 +262,9 @@ public struct GroqClient: Sendable {
         text.utf8.count * 2 / 7 + 1
     }
 
-    func makeChatRequest(model: GroqChatModel, system: String, user: String, maxTokens: Int) throws -> URLRequest {
+    func makeChatRequest(
+        model: GroqChatModel, system: String, user: String, maxTokens: Int, reasoningEffort: String? = nil
+    ) throws -> URLRequest {
         let key = try validKey()
         var request = URLRequest(url: Self.baseURL.appending(path: "chat/completions"), timeoutInterval: timeout)
         request.httpMethod = "POST"
@@ -272,7 +277,7 @@ public struct GroqClient: Sendable {
             // Sin azar: el mismo dictado da siempre el mismo texto.
             temperature: 0,
             maxCompletionTokens: maxTokens,
-            reasoningEffort: reasoning.effort,
+            reasoningEffort: reasoningEffort ?? reasoning.effort,
             includeReasoning: reasoning.includeReasoning,
             reasoningFormat: reasoning.format
         )

@@ -143,8 +143,8 @@ struct SettingsView: View {
                     CardDivider()
                     SettingRow(
                         "Tener en cuenta lo ya escrito",
-                        detail: "Lee lo que hay antes del cursor para continuar la frase y escribir igual los nombres. "
-                            + (engine == .groq ? "Ese fragmento se envía a Groq junto al dictado." : "No sale de tu Mac.")
+                        detail: "Lee lo que hay antes del cursor para continuar la frase, y aprende de tus últimos dictados los nombres que usas para escribirlos igual. "
+                            + (engine == .groq ? "Ese fragmento y esos nombres se envían a Groq junto al dictado." : "No sale de tu Mac.")
                     ) {
                         Toggle("", isOn: $useContext)
                             .disabled(!polish)

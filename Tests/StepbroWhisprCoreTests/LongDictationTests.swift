@@ -167,8 +167,9 @@ struct PromptContextTests {
     }
 
     @Test func lasInstruccionesCabenEnElLimiteGratuito() {
-        // Unos 800 tokens: con 8.000 por minuto, salen unos nueve dictados pulidos por minuto y modelo.
-        #expect(GroqClient.estimatedTokens(PolishPrompt.smartInstructions) < 1150)
+        // Unos 1.300 tokens: con 8.000 por minuto salen unos cinco dictados pulidos por minuto y modelo,
+        // y los otros dos modelos cubren el resto. Más largas no caben sin notarse.
+        #expect(GroqClient.estimatedTokens(PolishPrompt.smartInstructions) < 1350)
     }
 
     @Test func qwenTieneTopeDeSalida() {

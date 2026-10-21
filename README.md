@@ -40,7 +40,7 @@ The interface is in Spanish. Dictation works in any language supported by Apple'
 - **Formatting.** Questions and exclamations (including Spanish ¿ and ¡), numbered and bulleted lists, spoken punctuation ("comma", "new paragraph"), emails and links.
 - **Dictionary and snippets.** Names and terms that must always be spelled right, and short phrases that expand into longer text.
 - **Style per app.** Casual in chat apps, formal in email, technical in code editors and terminals.
-- **Context aware.** Reads the text before the cursor so a dictation can continue a sentence and match the names already written.
+- **Context aware.** Reads the text before the cursor so a dictation can continue a sentence and match the names already written, and learns the names you use often from your recent dictations, so the recognizer expects them and spells them the same way every time.
 - **Long dictations.** With Groq, long recordings are split at natural pauses and transcribed while you are still talking, so the result is ready about a second after you stop.
 - **Languages.** Dictate in any language supported by Apple's recognizer, switch between Spanish and English automatically, and optionally translate the result into another language.
 - **History and stats.** Search past dictations, copy them again, and see your words per minute and time saved.
@@ -72,12 +72,12 @@ Choose one in **Ajustes › Motor de dictado** (Settings › Dictation engine).
 | Internet | Not needed | Required |
 | Cost | Free | Free tier available |
 
-With Groq, Apple's recognizer still runs in parallel as a fallback: if the network is slow or Groq fails, you still get your text. If the selected model reaches its rate limit, another one takes over.
+With Groq, almost every dictation goes through the language model, which is what adds the question marks, fixes misheard words and removes fillers; only two-word utterances are pasted straight away. Apple's recognizer still runs in parallel as a fallback: if the network is slow or Groq fails, you still get your text. If the selected model reaches its rate limit, another one takes over.
 
 ## Privacy
 
 - With the Apple engine, audio and text never leave your Mac.
-- With Groq, the recorded audio and the text to polish are sent to Groq. If **Tener en cuenta lo ya escrito** (use the text before the cursor) is on, that snippet is sent too. Nothing is sent anywhere else.
+- With Groq, the recorded audio and the text to polish are sent to Groq. If **Tener en cuenta lo ya escrito** (use the text before the cursor) is on, that snippet, your previous dictation in the same app and the names learned from your recent dictations are sent too. Nothing is sent anywhere else.
 - Your Groq key is stored in `~/Library/Application Support/stepbro whispr/`, readable only by your user.
 - History, dictionary and settings stay on your Mac.
 

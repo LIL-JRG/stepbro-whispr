@@ -303,13 +303,15 @@ final class AppState {
             finishRecording()
         }
 
-        let hints = vocabulary.hints
+        // Los nombres que has usado hace poco se le dicen al reconocimiento, como los del diccionario.
+        let learned = learnedNames
+        let hints = vocabulary.hints + learned
         let keepAudio = groq.transcribes
         let locales = [locale] + extraLocales
         let onLevel: @MainActor (Float) -> Void = { [weak self] level in
             self?.push(level: level)
         }
-        let context = readContext(for: recordingTarget)
+        let context = readContext(for: recordingTarget, recentNames: learned)
         recordingContext = context
         live?.cancel()
         live = nil
@@ -357,7 +359,7 @@ final class AppState {
         let id = recordingID
         let groq = groq
         let context = recordingContext
-        let hints = vocabulary.hints
+        let hints = vocabulary.hints + learnedNames
         let languages = ([locale] + extraLocales).compactMap { $0.language.languageCode?.identifier }
         // En el modo automático, Whisper detecta el idioma él solo (y entiende mezclas).
         let whisperLanguage = languages.count > 1 ? nil : languages.first
@@ -446,6 +448,7 @@ final class AppState {
             }
         } else {
             var alternative: String?
+            var source = "apple"
             if let whisper = whisper.task {
                 // Whisper (Groq) suele ser más preciso; lo que oyó Apple va como segunda opinión.
                 // Si la red va lenta, no se le espera más de la cuenta: el texto de Apple ya está listo.
@@ -453,13 +456,16 @@ final class AppState {
                 if whisperText == nil { groq.noteSlowNetwork() }
                 let chosen = TranscriptChooser.choose(whisper: whisperText, local: raw)
                 if chosen != raw, !raw.isEmpty { alternative = raw }
+                if let whisperText, chosen != raw || whisperText.trimmingCharacters(in: .whitespacesAndNewlines) == raw {
+                    source = "whisper"
+                }
                 raw = chosen
             }
             SpeechEngine.deleteAudio(recording.audioURL)
             guard !Task.isCancelled else { return }
             if !raw.isEmpty {
                 text = await processor.process(
-                    raw, alternative: alternative, locale: locale, languages: languages, target: target, context: context
+                    raw, alternative: alternative, source: source, locale: locale, languages: languages, target: target, context: context
                 ) { [weak self] in
                     self?.showPolishing(id)
                 }
@@ -480,7 +486,7 @@ final class AppState {
         history.record(Dictation(text: text, date: .now, duration: duration, appName: target.appName, bundleID: target.bundleID))
 
         // Si lo de antes del cursor se quedó a media frase, el dictado la continúa.
-        text = ContextJoiner.adapt(text, after: context.textBefore, keepingCase: vocabulary.entries.map(\.term))
+        text = ContextJoiner.adapt(text, after: context.textBefore, keepingCase: vocabulary.entries.map(\.term) + context.recentNames)
         if Preferences.trailingSpace, !text.hasSuffix("\n") { text += " " }
         switch await TextInserter.insert(text) {
         case .pasted:
@@ -498,16 +504,28 @@ final class AppState {
         phase = .polishing
     }
 
+    /// Minutos durante los que el dictado anterior en la misma app sigue sirviendo de contexto: en una
+    /// conversación se repiten los mismos nombres y temas, y así el modelo los escribe igual.
+    private static let previousDictationWindow: TimeInterval = 10 * 60
+
+    /// Nombres propios de los últimos dictados: se aprenden solos, sin pasar por el diccionario.
+    private var learnedNames: [String] {
+        RecentNames.extract(from: history.items, excluding: vocabulary.entries.map(\.term))
+    }
+
     /// Lee, sin bloquear, lo que hay antes del cursor y recuerda el dictado anterior en la misma app.
-    private func readContext(for target: DictationTarget) -> Task<DictationContext, Never> {
+    private func readContext(for target: DictationTarget, recentNames: [String]) -> Task<DictationContext, Never> {
         guard Preferences.useContext, Preferences.polish else { return Task { .none } }
         var previous: String?
-        if let last = history.items.first, last.appName == target.appName, Date.now.timeIntervalSince(last.date) < 180 {
+        if let last = history.items.first, last.appName == target.appName,
+           Date.now.timeIntervalSince(last.date) < Self.previousDictationWindow {
             previous = last.text
         }
         let bundleID = target.bundleID
         return Task.detached(priority: .userInitiated) {
-            DictationContext(textBefore: FocusContext.textBeforeCursor(bundleID: bundleID), previousDictation: previous)
+            DictationContext(
+                textBefore: FocusContext.textBeforeCursor(bundleID: bundleID), previousDictation: previous, recentNames: recentNames
+            )
         }
     }
 

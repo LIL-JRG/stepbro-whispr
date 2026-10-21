@@ -38,7 +38,7 @@ Puede funcionar entera en tu Mac, con el reconocimiento de voz de Apple y Apple 
 - **Formato.** Preguntas y exclamaciones con ¿? y ¡!, listas numeradas y con viñetas, puntuación dictada («coma», «nuevo párrafo»), correos y enlaces.
 - **Diccionario y atajos.** Nombres y términos que siempre se escriben bien, y frases cortas que se convierten en un texto más largo.
 - **Estilo por app.** Casual en los chats, formal en el correo y técnico en editores de código y terminales.
-- **Tiene en cuenta lo ya escrito.** Lee el texto que hay antes del cursor para continuar la frase y escribir los nombres igual.
+- **Tiene en cuenta lo ya escrito.** Lee el texto que hay antes del cursor para continuar la frase y escribir los nombres igual, y aprende de tus últimos dictados los nombres que más usas, para que el reconocimiento los espere y se escriban siempre igual.
 - **Dictados largos.** Con Groq, las grabaciones largas se cortan en las pausas y se transcriben mientras sigues hablando, así que el texto está listo un segundo después de terminar.
 - **Idiomas.** Dicta en cualquier idioma que admita el reconocimiento de Apple, alterna entre español e inglés automáticamente y, si quieres, traduce el resultado a otro idioma.
 - **Historial y estadísticas.** Busca dictados anteriores, cópialos de nuevo y consulta tus palabras por minuto y el tiempo ahorrado.
@@ -70,12 +70,12 @@ Se elige uno en **Ajustes › Motor de dictado**.
 | Internet | No hace falta | Necesario |
 | Coste | Gratis | Tiene plan gratuito |
 
-Con Groq, el reconocimiento de Apple sigue funcionando en paralelo como respaldo: si la red va lenta o Groq falla, el texto llega igualmente. Si el modelo elegido llega a su límite de uso, responde otro.
+Con Groq, casi todos los dictados pasan por el modelo de lenguaje, que es quien pone los signos de interrogación, corrige lo mal oído y quita las muletillas; solo lo de dos palabras se pega directamente. El reconocimiento de Apple sigue funcionando en paralelo como respaldo: si la red va lenta o Groq falla, el texto llega igualmente. Si el modelo elegido llega a su límite de uso, responde otro.
 
 ## Privacidad
 
 - Con el motor de Apple, el audio y el texto no salen de tu Mac.
-- Con Groq, el audio grabado y el texto que hay que pulir se envían a Groq. Si **Tener en cuenta lo ya escrito** está activado, también se envía ese fragmento. No se envía nada a ningún otro sitio.
+- Con Groq, el audio grabado y el texto que hay que pulir se envían a Groq. Si **Tener en cuenta lo ya escrito** está activado, también se envían ese fragmento, tu dictado anterior en la misma app y los nombres aprendidos de tus últimos dictados. No se envía nada a ningún otro sitio.
 - La clave de Groq se guarda en `~/Library/Application Support/stepbro whispr/` y solo tu usuario puede leerla.
 - El historial, el diccionario y los ajustes se quedan en tu Mac.
 
