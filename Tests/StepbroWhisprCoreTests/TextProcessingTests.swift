@@ -178,3 +178,31 @@ struct BasicCleanupTests {
         #expect(BasicCleanup.apply("vale", style: .formal) == "Vale")
     }
 }
+
+@Suite("Nombres aprendidos")
+struct RecentNamesTests {
+    @Test func aprendeLosNombresRepetidos() {
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        let history = [
+            "Estaba pensando que el viernes también viene Bruno.",
+            "Pero no sé, porque entre Inés, el Tavo, Bruno y Olga no se llevan bien. ¿Crees que afecte a eso?",
+            "Mejor Tavo. Yo siento que Tavo e Inés están bien.",
+            "Ok, el borrador largo, bórralo. Pregúntale a Claude.",
+        ].enumerated().map { Dictation(text: $1, date: now.addingTimeInterval(-Double($0) * 60)) }
+        // Olga sale en un solo dictado y Claude ya está en el diccionario: no cuentan.
+        #expect(RecentNames.extract(from: history, now: now, excluding: ["Claude"]) == ["Tavo", "Bruno", "Inés"])
+    }
+
+    @Test func noConfundeInicialesDeFraseConNombres() {
+        #expect(RecentNames.names(in: "Hola. Mañana vemos a Marta en Xcode. ¿Vienes? Sí, con Ana.") == ["Marta", "Xcode", "Ana"])
+        #expect(RecentNames.names(in: "Pasos:\nRevisar el login\nAvisar a Pedro") == ["Pedro"])
+        #expect(RecentNames.names(in: "On Friday I talked to Sarah about the API.") == ["Sarah", "API"])
+    }
+
+    @Test func losNombresViejosNoCuentan() {
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        let old = Dictation(text: "Habla con Tavo y con Tavo otra vez.", date: now.addingTimeInterval(-3 * 24 * 3600))
+        let recent = Dictation(text: "Habla con Tavo.", date: now)
+        #expect(RecentNames.extract(from: [recent, old], now: now).isEmpty)
+    }
+}
