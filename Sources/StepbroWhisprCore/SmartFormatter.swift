@@ -44,11 +44,13 @@ public enum SmartFormatter {
     }
 
     /// ¿Hace falta un modelo de lenguaje? No, si el texto ya está limpio: así se pega al instante.
-    public static func needsLanguageModel(_ text: String, alternative: String?) -> Bool {
+    /// `minimumWords`: a partir de esa longitud siempre se usa. Con el modelo local, que tarda segundos,
+    /// solo compensa en textos largos; con Groq, que responde en medio segundo, casi en todos.
+    public static func needsLanguageModel(_ text: String, alternative: String?, minimumWords: Int = 10) -> Bool {
         if matches(cuesPattern, text) || matches(restartPattern, text) || matches(dictatedPattern, text)
             || matches(negationPattern, text) { return true }
         // A partir de cierta longitud hay más que ganar (palabras mal oídas, frases sin cortar) que que perder.
-        if text.wordCount >= 10 { return true }
+        if text.wordCount >= minimumWords { return true }
         // Si las dos transcripciones no coinciden, el modelo elige la buena.
         if let alternative, agreement(text, alternative) < 0.85 { return true }
         return false
@@ -260,24 +262,65 @@ public enum SmartFormatter {
     /// Palabras que solo pueden empezar una pregunta («qué» o «cómo» también abren exclamaciones).
     private static let questionStarts = [
         "dónde", "adónde", "cuándo", "cuál", "cuáles", "quién", "quiénes", "por qué", "para qué",
-        "qué hora", "qué tal", "qué opinas", "qué piensas", "qué haces", "qué hay", "qué pasa",
-        "qué te parece", "cómo estás", "cómo te", "cómo va", "cuántos", "cuántas",
+        "qué hora", "qué tal", "qué opinas", "qué piensas", "qué haces", "qué hay", "qué pasa", "qué pasó",
+        "qué te parece", "qué es", "qué son", "qué significa", "qué quieres", "qué necesitas", "qué prefieres",
+        "qué hacemos", "qué hago", "cómo estás", "cómo te", "cómo va", "cómo vas", "cómo lo", "cómo le", "cómo hago",
+        "cómo hacemos", "cómo funciona", "cuántos", "cuántas",
     ]
 
-    /// «Dónde has dejado las llaves.» → «¿Dónde has dejado las llaves?»
+    /// Comienzos que, en español, piden algo al oyente aunque no lleven palabra interrogativa:
+    /// «me pasas el informe», «puedes venir», «te parece bien si…», «crees que…».
+    /// Solo formas dirigidas al otro: «me gusta» o «me parece» son afirmaciones.
+    private static let requestPattern = #"(?i)^(?:me\s+(?:puedes|podrías|podrias|pasas|mandas|envías|envias|dices|ayudas|explicas|cuentas|avisas|confirmas|recuerdas|prestas|traes|das|dejas|compartes|muestras|enseñas|recomiendas|esperas|acompañas|llamas|escribes)|(?:te|les|os)\s+(?:parece|gustaría|gustaria|importa|late|suena|conviene|sirve|funciona|acuerdas|animas|apuntas|interesa|molesta|viene bien|acuerdan|animan|apuntan)|puedes|podrías|podrias|quieres|querrías|querrias|quisieras|sabes\s+(?:si|dónde|donde|cuándo|cuando|cómo|como|cuánto|cuanto|cuántos|cuantos|quién|quien|cuál|cual|qué)|crees que|será que|sera que|y si|qué tal si|que tal si|hay forma|hay manera|hay algún|hay alguna|tienes idea|alguien sabe|alguien tiene|verdad que)\b"#
+
+    /// Coletillas que convierten lo anterior en pregunta: «lo subimos mañana, no», «vienes o qué».
+    private static let tagPattern = #"(?i),\s*(?:no|verdad|cierto|vale|eh|sabes|o qué|o que)$|\s+o qué$"#
+
+    /// «Dónde has dejado las llaves.» → «¿Dónde has dejado las llaves?»,
+    /// «Oye, me pasas el informe» → «Oye, ¿me pasas el informe?», «Lo subimos mañana, no» → «Lo subimos mañana, ¿no?».
     static func markObviousQuestions(_ text: String, when applies: (String) -> Bool = { _ in true }) -> String {
         mapSentences(text) { sentence in
             let trimmed = sentence.trimmingCharacters(in: .whitespaces)
-            // Con coma o dos puntos hay más de una idea («Por qué falla no lo sé, pero…»): eso lo decide la IA.
-            guard !trimmed.hasSuffix("?"), !trimmed.hasSuffix("!"), !trimmed.contains(where: { ",:".contains($0) }),
+            // Con dos puntos es un título o una introducción («Cómo se instala:»), no una pregunta.
+            guard !trimmed.hasSuffix("?"), !trimmed.hasSuffix("!"), !trimmed.contains("¿"), !trimmed.contains(":"),
                   applies(trimmed) else { return sentence }
-            let body = trimmed.hasPrefix("¿") ? String(trimmed.dropFirst()) : trimmed
-            let lower = body.lowercased()
-            guard questionStarts.contains(where: { lower.hasPrefix($0 + " ") || lower == $0 }) else { return sentence }
-            var core = body
+            var core = trimmed
             while let last = core.last, ".,;:".contains(last) { core.removeLast() }
-            return "¿" + core + "?"
+            // Coletilla al final: se pregunta solo la coletilla.
+            if let tag = core.range(of: tagPattern, options: .regularExpression) {
+                let word = core[tag].drop { $0 == "," || $0 == " " }
+                let head = core[..<tag.lowerBound].trimmingCharacters(in: .whitespaces)
+                return word.lowercased().hasPrefix("o ") ? "¿" + head + " " + word + "?" : head + ", ¿" + word + "?"
+            }
+            // Tras un vocativo o una muletilla corta («Oye, », «Marta, », «Ok, perfecto, ») la pregunta empieza después.
+            let (lead, body) = splitLeadIn(core)
+            // Con coma o dos puntos hay más de una idea («Por qué falla no lo sé, pero…»): eso lo decide la IA.
+            guard !body.contains(where: { ",:".contains($0) }) else { return sentence }
+            let lower = body.lowercased()
+            let asks = questionStarts.contains(where: { lower.hasPrefix($0 + " ") || lower == $0 })
+                || lower.range(of: requestPattern, options: .regularExpression) != nil
+            guard asks else { return sentence }
+            guard !lead.isEmpty else { return "¿" + body + "?" }
+            return lead + " ¿" + lowercasedFirst(body) + "?"
         }
+    }
+
+    /// Separa un vocativo o unas muletillas cortas iniciales («Oye, », «Ok, perfecto, ») del resto de la frase.
+    private static func splitLeadIn(_ sentence: String) -> (lead: String, body: String) {
+        var start = sentence.startIndex
+        var first = true
+        while let comma = sentence[start...].firstIndex(of: ","), sentence.index(after: comma) < sentence.endIndex {
+            let lead = sentence[start..<comma].trimmingCharacters(in: .whitespaces)
+            let short = lead.split(separator: " ").count <= 2
+            guard short, first || leadIns.contains(lead.lowercased()) else { break }
+            start = sentence.index(after: comma)
+            first = false
+        }
+        guard start > sentence.startIndex else { return ("", sentence) }
+        return (
+            sentence[..<start].trimmingCharacters(in: .whitespaces),
+            sentence[start...].trimmingCharacters(in: .whitespaces)
+        )
     }
 
     /// Palabras tras «qué» que solo pueden ser exclamación: «qué bien», «qué pena»…
@@ -315,19 +358,8 @@ public enum SmartFormatter {
             for (close, open) in [("?", "¿"), ("!", "¡")] where closesWord && trimmed.hasSuffix(close) && !trimmed.contains(open) {
                 // Tras un vocativo o unas muletillas cortas («Oye, », «Marta, », «Ok, perfecto, »),
                 // el signo va después de la última.
-                var start = trimmed.startIndex
-                var first = true
-                while let comma = trimmed[start...].firstIndex(of: ","), trimmed.index(after: comma) < trimmed.endIndex {
-                    let lead = trimmed[start..<comma].trimmingCharacters(in: .whitespaces)
-                    let short = lead.split(separator: " ").count <= 2
-                    guard short, first || leadIns.contains(lead.lowercased()) else { break }
-                    start = trimmed.index(after: comma)
-                    first = false
-                }
-                if start > trimmed.startIndex {
-                    let rest = trimmed[start...].trimmingCharacters(in: .whitespaces)
-                    return trimmed[..<start] + " " + open + lowercasedFirst(rest)
-                }
+                let (lead, body) = splitLeadIn(trimmed)
+                guard lead.isEmpty else { return lead + " " + open + lowercasedFirst(body) }
                 return open + trimmed
             }
             return sentence

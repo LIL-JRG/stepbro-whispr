@@ -87,6 +87,38 @@ struct SmartFormatterTests {
         #expect(SmartFormatter.finish("Qué casa tan grande.", language: "es") == "Qué casa tan grande.")
     }
 
+    @Test func preguntasSinPalabraInterrogativa() {
+        #expect(SmartFormatter.finish("Me puedes pasar el informe cuando puedas", language: "es") == "¿Me puedes pasar el informe cuando puedas?")
+        #expect(SmartFormatter.finish("Oye, me pasas el informe", language: "es") == "Oye, ¿me pasas el informe?")
+        #expect(SmartFormatter.finish("Te parece bien si lo movemos al lunes.", language: "es") == "¿Te parece bien si lo movemos al lunes?")
+        #expect(SmartFormatter.finish("Crees que afecte a eso.", language: "es") == "¿Crees que afecte a eso?")
+        #expect(SmartFormatter.finish("Qué es mala idea.", language: "es") == "¿Qué es mala idea?")
+        // «Lo puedes revisar hoy» puede ser una instrucción: sin señal clara, lo decide la IA.
+        #expect(SmartFormatter.finish("Lo puedes hacer con el comando build.", language: "es") == "Lo puedes hacer con el comando build.")
+    }
+
+    @Test func coletillas() {
+        #expect(SmartFormatter.finish("Entonces lo subimos mañana, no", language: "es") == "Entonces lo subimos mañana, ¿no?")
+        #expect(SmartFormatter.finish("Ya está todo listo, verdad.", language: "es") == "Ya está todo listo, ¿verdad?")
+        #expect(SmartFormatter.finish("Vienes o qué", language: "es") == "¿Vienes o qué?")
+    }
+
+    @Test func afirmacionesQueParecenPreguntas() {
+        for text in [
+            "Me parece bien.", "Me gusta el diseño.", "No sé si viene mañana, ya veremos.",
+            "Revisa el login y súbelo cuando esté listo.", "Podemos hacer dos cosas.", "Nos vemos mañana a las 5.",
+            "Cuánto me alegro.", "Cómo se instala:\n1. Descarga el zip", "Sabes que te quiero.", "Lo hice, sí.",
+        ] {
+            #expect(SmartFormatter.finish(text, language: "es") == text)
+        }
+    }
+
+    @Test func umbralDePalabrasParaLaIA() {
+        #expect(SmartFormatter.needsLanguageModel("ya voy para allá", alternative: nil, minimumWords: 3))
+        #expect(!SmartFormatter.needsLanguageModel("vale perfecto", alternative: nil, minimumWords: 3))
+        #expect(!SmartFormatter.needsLanguageModel("ya voy para allá", alternative: nil))
+    }
+
     @Test func exclamacionesEvidentes() {
         #expect(SmartFormatter.finish("Que bien que vengas a la cena.", language: "es") == "¡Qué bien que vengas a la cena!")
         #expect(SmartFormatter.finish("Qué pena", language: "es") == "¡Qué pena!")
