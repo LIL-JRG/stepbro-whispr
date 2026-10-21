@@ -117,6 +117,8 @@ enum Preferences {
     static let useContextKey = "useContext"
     /// Qwen pasó a ser el modelo recomendado: se elige una vez a quien tenía el anterior.
     private static let qwenDefaultKey = "chatModelMovedToQwen"
+    /// Whisper Large v3 pasó a ser el recomendado (oye mejor los nombres y tarda lo mismo): igual.
+    private static let largeWhisperDefaultKey = "whisperModelMovedToLarge"
     /// Interruptores de versiones anteriores, solo para elegir el motor la primera vez.
     private static let legacyGroqKeys = ["groqTranscribe", "groqPolish"]
 
@@ -128,6 +130,10 @@ enum Preferences {
         if !defaults.bool(forKey: qwenDefaultKey) {
             defaults.set(true, forKey: qwenDefaultKey)
             defaults.removeObject(forKey: groqChatModelKey)
+        }
+        if !defaults.bool(forKey: largeWhisperDefaultKey) {
+            defaults.set(true, forKey: largeWhisperDefaultKey)
+            defaults.removeObject(forKey: groqWhisperModelKey)
         }
         defaults.register(defaults: [
             hotkeyKey: Hotkey.fn.rawValue,
@@ -142,7 +148,7 @@ enum Preferences {
             microphoneKey: "",
             engineKey: DictationEngine.apple.rawValue,
             translateKey: TranslationTarget.none.rawValue,
-            groqWhisperModelKey: WhisperModel.turbo.rawValue,
+            groqWhisperModelKey: WhisperModel.large.rawValue,
             groqChatModelKey: GroqChatModel.qwen.rawValue,
             useContextKey: true,
         ])
@@ -178,7 +184,7 @@ enum Preferences {
         DictationEngine(rawValue: UserDefaults.standard.string(forKey: engineKey) ?? "") ?? .apple
     }
     static var groqWhisperModel: WhisperModel {
-        WhisperModel(rawValue: UserDefaults.standard.string(forKey: groqWhisperModelKey) ?? "") ?? .turbo
+        WhisperModel(rawValue: UserDefaults.standard.string(forKey: groqWhisperModelKey) ?? "") ?? .large
     }
     static var groqChatModel: GroqChatModel {
         GroqChatModel(rawValue: UserDefaults.standard.string(forKey: groqChatModelKey) ?? "") ?? .qwen

@@ -20,7 +20,7 @@ struct SettingsView: View {
     @AppStorage(Preferences.translateKey) private var translateTo: TranslationTarget = .none
     @State private var translationStatus: LanguageAvailability.Status?
     @State private var downloadConfiguration: TranslationSession.Configuration?
-    @AppStorage(Preferences.groqWhisperModelKey) private var whisperModel: WhisperModel = .turbo
+    @AppStorage(Preferences.groqWhisperModelKey) private var whisperModel: WhisperModel = .large
     @AppStorage(Preferences.groqChatModelKey) private var groqModel: GroqChatModel = .qwen
     @AppStorage(Preferences.useContextKey) private var useContext = true
     @State private var launchAtLogin = LaunchAtLogin.isEnabled

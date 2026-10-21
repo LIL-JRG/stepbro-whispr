@@ -67,7 +67,7 @@ Choose one in **Ajustes › Motor de dictado** (Settings › Dictation engine).
 
 | | Apple | Groq |
 | --- | --- | --- |
-| Speech recognition | `SpeechAnalyzer`, on device | Whisper Large v3 Turbo or v3 |
+| Speech recognition | `SpeechAnalyzer`, on device | Whisper Large v3 or v3 Turbo |
 | Text polishing | Apple Intelligence, on device | Qwen 3.8 27B, GPT OSS 20B or 120B |
 | Internet | Not needed | Required |
 | Cost | Free | Free tier available |

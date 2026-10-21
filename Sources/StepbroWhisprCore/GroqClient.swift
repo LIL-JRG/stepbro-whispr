@@ -2,22 +2,24 @@ import Foundation
 
 /// Modelos de Groq para transcribir la voz.
 public enum WhisperModel: String, CaseIterable, Identifiable, Codable, Sendable {
-    case turbo = "whisper-large-v3-turbo"
     case large = "whisper-large-v3"
+    case turbo = "whisper-large-v3-turbo"
 
     public var id: String { rawValue }
 
     public var title: String {
         switch self {
-        case .turbo: "Whisper Large v3 Turbo"
         case .large: "Whisper Large v3"
+        case .turbo: "Whisper Large v3 Turbo"
         }
     }
 
+    /// Medido con 40 audios en español: v3 oye mejor los nombres y los correos dictados,
+    /// y en Groq tarda lo mismo que el Turbo (0,47 s frente a 0,45 s de mediana).
     public var summary: String {
         switch self {
-        case .turbo: "Muy rápido y preciso. El recomendado."
-        case .large: "La máxima precisión, algo más lento."
+        case .large: "El recomendado: el más preciso con nombres, y en Groq igual de rápido."
+        case .turbo: "Un poco más rápido en audios largos, menos preciso con nombres."
         }
     }
 }

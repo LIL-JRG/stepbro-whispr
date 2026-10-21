@@ -65,7 +65,7 @@ Se elige uno en **Ajustes › Motor de dictado**.
 
 | | Apple | Groq |
 | --- | --- | --- |
-| Reconocimiento de voz | `SpeechAnalyzer`, en el Mac | Whisper Large v3 Turbo o v3 |
+| Reconocimiento de voz | `SpeechAnalyzer`, en el Mac | Whisper Large v3 o v3 Turbo |
 | Pulido del texto | Apple Intelligence, en el Mac | Qwen 3.8 27B, GPT OSS 20B o 120B |
 | Internet | No hace falta | Necesario |
 | Coste | Gratis | Tiene plan gratuito |
