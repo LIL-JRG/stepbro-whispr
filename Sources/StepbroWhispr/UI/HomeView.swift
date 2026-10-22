@@ -202,7 +202,8 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     SectionLabel(text: title(for: group.day))
                     SoftCard {
-                        LazyVStack(spacing: 0) {
+                        // Not lazy: selectable text inside nested lazy stacks can render upside down
+                        VStack(spacing: 0) {
                             ForEach(group.items) { dictation in
                                 FeedRow(dictation: dictation, state: state)
                             }
